@@ -1,0 +1,30 @@
+{
+  "name": "store",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "animate.css": "^4.1.1",
+    "animsition": "^4.0.2",
+    "bootstrap": "^5.3.8",
+    "daterangepicker": "^3.1.0",
+    "hamburgers": "^1.2.1",
+    "isotope-layout": "^3.0.6",
+    "jquery": "^4.0.0",
+    "jquery-countdown": "^2.2.0",
+    "jquery-ui": "^1.14.2",
+    "lightbox2": "^2.12.0",
+    "magnific-popup": "^1.2.0",
+    "parallax-js": "^3.1.0",
+    "perfect-scrollbar": "^1.5.6",
+    "select2": "^4.1.0-rc.0",
+    "slick-carousel": "^1.8.1",
+    "sweetalert": "^2.1.2"
+  }
+}
