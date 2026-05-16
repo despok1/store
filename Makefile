@@ -12,3 +12,5 @@ static:
 	python manage.py collectstatic
 up: 
 	railway up 
+push:
+	git add . && git commit && git push

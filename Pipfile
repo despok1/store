@@ -12,6 +12,7 @@ django-jazzmin = "*"
 django-summernote = "*"
 dj-database-url = "*"
 whitenoise = "*"
+gunicorn = "*"
 
 [dev-packages]
 
