@@ -18,7 +18,17 @@ DEBUG = False
 
 
 # CSRF trusted origins for Railway
-CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',')
+raw_csrf_trusted_origins = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
+CSRF_TRUSTED_ORIGINS = []
+if raw_csrf_trusted_origins:
+    for origin in raw_csrf_trusted_origins.split(','):
+        origin = origin.strip()
+        if not origin:
+            continue
+        if origin.startswith(('http://', 'https://')):
+            CSRF_TRUSTED_ORIGINS.append(origin)
+        else:
+            CSRF_TRUSTED_ORIGINS.append(f'https://{origin}')
 
 # Email settings for production
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
