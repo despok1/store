@@ -1,0 +1,196 @@
+{% load static %}
+<div class="flex-w flex-sb-m p-b-52">
+				<div class="flex-w flex-l-m filter-tope-group m-tb-10">
+					<a href="{% url 'product' %}{% if search_query %}?q={{ search_query|urlencode }}{% endif %}" class="stext-106 cl6 hov1 bor3 trans-04 m-r-32 m-tb-5 {% if not selected_category %}how-active1{% endif %}">
+						Всі товари
+					</a>
+
+					{# show first few categories, hide the rest behind a toggle if many #}
+					{% for c in categories %}
+						{% if forloop.counter <= 6 %}
+						<a href="{% url 'product' %}?category={{ c.slug }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="stext-106 cl6 hov1 bor3 trans-04 m-r-32 m-tb-5 {% if selected_category == c.slug %}how-active1{% endif %}" data-filter=".{{ c.slug }}">
+							{{ c.name }}
+						</a>
+						{% else %}
+							{% if forloop.counter == 7 %}
+							<div class="more-cats{% if not selected_category %} dis-none{% endif %}">
+							{% endif %}
+							<a href="{% url 'product' %}?category={{ c.slug }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}" class="stext-106 cl6 hov1 bor3 trans-04 m-r-32 m-tb-5 {% if selected_category == c.slug %}how-active1{% endif %}" data-filter=".{{ c.slug }}">
+								{{ c.name }}
+							</a>
+							{% if forloop.last %}</div>{% endif %}
+						{% endif %}
+					{% endfor %}
+					{% if categories|length > 6 %}
+					<button type="button" class="stext-106 cl6 bor3 trans-04 m-r-32 m-tb-5 js-toggle-cats">Показати всі</button>
+					{% endif %}
+				</div>
+
+				<div class="flex-w flex-c-m m-tb-10">
+					<div class="flex-c-m stext-106 cl6 size-104 bor4 pointer hov-btn3 trans-04 m-r-8 m-tb-4 js-show-filter">
+						<i class="icon-filter cl2 m-r-6 fs-15 trans-04 zmdi zmdi-filter-list"></i>
+						<i class="icon-close-filter cl2 m-r-6 fs-15 trans-04 zmdi zmdi-close dis-none"></i>
+						 Filter
+					</div>
+
+					<div class="flex-c-m stext-106 cl6 size-105 bor4 pointer hov-btn3 trans-04 m-tb-4 js-show-search">
+						<i class="icon-search cl2 m-r-6 fs-15 trans-04 zmdi zmdi-search"></i>
+						<i class="icon-close-search cl2 m-r-6 fs-15 trans-04 zmdi zmdi-close dis-none"></i>
+						Search
+					</div>
+				</div>
+				
+				<!-- Search product -->
+				<div class="dis-none panel-search w-full p-t-10 p-b-15">
+					<form method="get" action="{% url 'product' %}" class="bor8 dis-flex p-l-15">
+						{% if selected_category %}
+							<input type="hidden" name="category" value="{{ selected_category }}">
+						{% endif %}
+						<button type="submit" class="size-113 flex-c-m fs-16 cl2 hov-cl1 trans-04">
+							<i class="zmdi zmdi-search"></i>
+						</button>
+
+						<input class="mtext-107 cl2 size-114 plh2 p-r-15" type="text" name="q" value="" placeholder="Пошук">
+					</form>	
+				</div>
+
+				<!-- Filter -->
+				<div class="dis-none panel-filter w-full p-t-10">
+					<div class="wrap-filter flex-w bg6 w-full p-lr-40 p-t-27 p-lr-15-sm">
+						<div class="filter-col1 p-r-15 p-b-27">
+							<div class="mtext-102 cl2 p-b-15">
+								Сортувати за
+							</div>
+
+							<ul>
+								<li class="p-b-6">
+									<a href="{% url 'product' %}?sort=default{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}" class="filter-link stext-106 trans-04 {% if sort_by == 'default' %}filter-link-active{% endif %}">
+										За замовчуванням
+									</a>
+								</li>
+								<li class="p-b-6">
+									<a href="{% url 'product' %}?sort=newest{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}" class="filter-link stext-106 trans-04 {% if sort_by == 'newest' %}filter-link-active{% endif %}">
+										Новинки
+									</a>
+								</li>
+
+								<li class="p-b-6">
+									<a href="{% url 'product' %}?sort=price_asc{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}" class="filter-link stext-106 trans-04 {% if sort_by == 'price_asc' %}filter-link-active{% endif %}">
+										Від дешевих до дорогих
+									</a>
+								</li>
+
+								<li class="p-b-6">
+									<a href="{% url 'product' %}?sort=price_desc{% if selected_category %}&category={{ selected_category }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}" class="filter-link stext-106 trans-04 {% if sort_by == 'price_desc' %}filter-link-active{% endif %}">
+										Від дорогих до дешевих
+									</a>
+								</li>
+							</ul>
+						</div>
+
+						<div class="filter-col2 p-r-15 p-b-27">
+							<div class="mtext-102 cl2 p-b-15">
+								Ціна
+							</div>
+
+							<ul>
+								<li class="p-b-6">
+									<form method="get" action="{% url 'product' %}" class="price-filter-form">
+										{% if selected_category %}
+											<input type="hidden" name="category" value="{{ selected_category }}">
+										{% endif %}
+										{% if search_query %}
+											<input type="hidden" name="q" value="{{ search_query }}">
+										{% endif %}
+										<input type="hidden" name="sort" value="{{ sort_by }}">
+										
+										<div class="inputs">
+											<input type="number" id="minInput" name="min_price" value="{{ min_price }}">
+											<input type="number" id="maxInput" name="max_price" value="{{ max_price }}">
+										</div>
+
+										<div class="slider">
+											<div class="progress"></div>
+										</div>
+
+										<div class="range-input">
+											<input type="range" id="minRange" min="{{ price_min }}" max="{{ price_max }}" value="{{ min_price }}">
+											<input type="range" id="maxRange" min="{{ price_min }}" max="{{ price_max }}" value="{{ max_price }}">
+										</div>
+										
+										<button type="submit" class="stext-107 cl6 hov1 bor3 trans-04 p-t-10" style="background: none; border: none; cursor: pointer; text-decoration: underline;">
+											Застосувати
+										</button>
+									</form>
+								</li>
+							</ul>
+						</div>
+
+						
+
+						{% if subcategories %}
+						<div class="filter-col4 p-b-27">
+							<div class="mtext-102 cl2 p-b-15">
+								Підкатегорії
+							</div>
+
+							<div class="flex-w p-t-4 m-r--5">
+								{% for subcategory in subcategories %}
+								<a href="{% url 'product' %}?category={{ selected_category }}&subcategory={{ subcategory.slug }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}" class="flex-c-m stext-107 cl6 size-301 bor7 p-lr-15 hov-tag1 trans-04 m-r-5 m-b-5">
+									{{ subcategory.name }}
+								</a>
+								{% endfor %}
+							</div>
+						</div>
+						{% endif %}
+					</div>
+				</div>
+			</div>
+<script>
+const minRange = document.getElementById("minRange");
+const maxRange = document.getElementById("maxRange");
+
+const minInput = document.getElementById("minInput");
+const maxInput = document.getElementById("maxInput");
+
+const progress = document.querySelector(".progress");
+
+function updateSlider() {
+
+    let minVal = parseInt(minRange.value);
+    let maxVal = parseInt(maxRange.value);
+
+    if(minVal > maxVal - 1){
+        minVal = maxVal - 1;
+        minRange.value = minVal;
+    }
+
+    if(maxVal < minVal + 1){
+        maxVal = minVal + 1;
+        maxRange.value = maxVal;
+    }
+
+    minInput.value = minVal;
+    maxInput.value = maxVal;
+
+    const max = parseInt(minRange.max);
+
+    progress.style.left = (minVal / max) * 100 + "%";
+    progress.style.right = 100 - (maxVal / max) * 100 + "%";
+}
+
+minRange.addEventListener("input", updateSlider);
+maxRange.addEventListener("input", updateSlider);
+
+minInput.addEventListener("input", () => {
+    minRange.value = minInput.value;
+    updateSlider();
+});
+
+maxInput.addEventListener("input", () => {
+    maxRange.value = maxInput.value;
+    updateSlider();
+});
+
+updateSlider();
+</script>

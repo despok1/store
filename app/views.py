@@ -1,9 +1,303 @@
-from django.shortcuts import render
+from django.db.models import Q
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from django.core.mail import send_mail
+from django.conf import settings
+from django.utils import timezone
 
-# Create your views here.
-
+from .models import Product, Category
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+import json
+import os
+from django.conf import settings
+from collections import defaultdict
 
 def index(request):
-    return render(request, 'app/index.html')
-def product(request):
-    return render(request, 'app/product.html')
+    categories = Category.objects.all().order_by('order')
+    products = Product.objects.all().order_by('-is_featured', '-date_published') #! featured first, then by date
+    return render(request, 'app/index.html', {'products': products, 'categories': categories})
+
+
+def product_list(request):
+    category_slug = request.GET.get('category')
+    subcategory_slug = request.GET.get('subcategory')
+    search_query = request.GET.get('q', '').strip()
+    sort_by = request.GET.get('sort', 'default')
+    
+    # Price filter
+    try:
+        min_price = int(request.GET.get('min_price', 0))
+    except (ValueError, TypeError):
+        min_price = 0
+    try:
+        max_price = int(request.GET.get('max_price', 999999999))
+    except (ValueError, TypeError):
+        max_price = 999999999
+    
+    products = Product.objects.select_related('category', 'subcategory').all()
+
+    selected_category_obj = None
+    subcategories = []
+    
+    if category_slug:
+        products = products.filter(category__slug=category_slug)
+        try:
+            selected_category_obj = Category.objects.get(slug=category_slug)
+            subcategories = selected_category_obj.subcategories.all().order_by('order')
+        except Category.DoesNotExist:
+            pass
+    
+    if subcategory_slug:
+        products = products.filter(subcategory__slug=subcategory_slug)
+
+    if search_query:
+        keywords = [word for word in search_query.split() if word]
+        for keyword in keywords:
+            products = products.filter(
+                Q(title__icontains=keyword)
+                # | Q(description__icontains=keyword)
+                # | Q(features__icontains=keyword)
+                | Q(category__name__icontains=keyword)
+                | Q(subcategory__name__icontains=keyword)
+            )
+    
+    # Get price range from filtered products (before applying price filter)
+    from django.db.models import Min, Max
+    price_stats = products.aggregate(price_min=Min('price'), price_max=Max('price'))
+    price_min = price_stats['price_min'] or 0
+    price_max = price_stats['price_max'] or 999999999
+    
+    # If no price parameters provided, use the actual range
+    if 'min_price' not in request.GET:
+        min_price = price_min
+    if 'max_price' not in request.GET:
+        max_price = price_max
+    
+    # Apply price filter
+    products = products.filter(price__gte=min_price, price__lte=max_price)
+
+    # Apply sorting
+    if sort_by == 'newest':
+        products = products.order_by('-date_published')
+    elif sort_by == 'price_asc':
+        products = products.order_by('price')
+    elif sort_by == 'price_desc':
+        products = products.order_by('-price')
+    else:  # default
+        products = products.order_by('-is_featured', '-date_published')
+    
+    products = products.distinct()
+    categories = Category.objects.all().order_by('order')
+    return render(
+        request,
+        'app/product.html',
+        {
+            'products': products,
+            'categories': categories,
+            'selected_category': category_slug,
+            'selected_category_obj': selected_category_obj,
+            'subcategories': subcategories,
+            'search_query': search_query,
+            'sort_by': sort_by,
+            'min_price': min_price,
+            'max_price': max_price,
+            'price_min': price_min,
+            'price_max': price_max,
+        },
+    )
+
+
+def product_detail(request, slug):
+    product = get_object_or_404(Product, slug=slug)
+    
+    # Get related products from the same category
+    related_products = Product.objects.filter(
+        category=product.category
+    ).exclude(
+        id=product.id
+    ).order_by(
+        '-is_featured',  # Featured products first
+        '-date_published'  # Then by newest
+    )[:8]  # Limit to 8 products
+    
+    return render(request, 'app/product-detail.html', {
+        'product': product,
+        'related_products': related_products
+    })
+
+def contact(request):
+    return render(request, 'app/contact.html')
+
+def cart(request):
+    if request.method == 'POST':
+        if 'product_id' in request.POST:
+            # Add to cart
+            product_id = request.POST.get('product_id')
+            quantity = int(request.POST.get('quantity', 1))
+            if product_id:
+                cart = request.session.get('cart', {})
+                if product_id in cart:
+                    cart[product_id] += quantity
+                else:
+                    cart[product_id] = quantity
+                request.session['cart'] = cart
+                messages.success(request, 'Товар додано в кошик!')
+        elif 'name' in request.POST:
+            # Checkout
+            name = request.POST.get('name', '').strip()
+            phone = request.POST.get('phone', '').strip()
+            region = request.POST.get('time', '').strip()  # Note: 'time' is region
+            city = request.POST.get('city', '').strip()
+            
+            # Validation
+            errors = []
+            if not name:
+                errors.append('Ім\'я обов\'язкове.')
+            if not phone:
+                errors.append('Телефон обов\'язковий.')
+            if not region or region == 'Виберіть Область...':
+                errors.append('Область обов\'язкова.')
+            if not city or city == 'Виберіть Місто...':
+                errors.append('Місто обов\'язкове.')
+            
+            cart = request.session.get('cart', {})
+            if not cart:
+                errors.append('Кошик порожній.')
+            
+            if errors:
+                for error in errors:
+                    messages.error(request, error)
+            else:
+                # Get cart items
+                cart_items = []
+                total = 0
+                for product_id, quantity in cart.items():
+                    try:
+                        product = Product.objects.get(id=product_id)
+                        subtotal = product.price * quantity
+                        total += subtotal
+                        cart_items.append({
+                            'product': product,
+                            'quantity': quantity,
+                            'subtotal': subtotal
+                        })
+                    except Product.DoesNotExist:
+                        pass
+                
+                # Form email
+                subject = f'Нове замовлення від {name}'
+                message = f'''
+Замовлення від: {name}
+Телефон: {phone}
+Область: {region}
+Місто: {city}
+
+Товари:
+'''
+                for item in cart_items:
+                    message += f'- {item["product"].title} (кількість: {item["quantity"]}, ціна: {item["product"].price}грн, всього: {item["subtotal"]}грн)\n'
+                
+                message += f'\nЗагальна вартість: {total}грн\n'
+                message += f'Дата і час: {timezone.now().strftime("%Y-%m-%d %H:%M:%S")}\n'
+                
+                try:
+                    send_mail(
+                        subject,
+                        message,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [settings.STORE_EMAIL],
+                        fail_silently=False,
+                    )
+                    messages.success(request, 'Замовлення успішно оформлено')
+                    # Clear cart
+                    request.session['cart'] = {}
+                    # request.session.modified = True
+                    # return redirect('cart')
+                except Exception as e:
+                    messages.error(request, f'Помилка при відправці замовлення: {str(e)}')
+    
+    # Rest of the function...
+    
+    cart_items = []
+    total = 0
+    json_path = os.path.join(settings.BASE_DIR, 'static', 'json', 'CitiesAndVillages - 14 March.json')
+    with open(json_path, 'r', encoding='utf-8') as f:
+        cities_data = json.load(f)
+
+    cities_by_region = defaultdict(list)
+    
+    # {"region1": ["city1", "city2", "..."],}
+    
+    for item in cities_data:
+        region = item['region']
+        city = item['object_name']
+        if city not in cities_by_region[region]:
+            cities_by_region[region].append(city)
+    
+    # Сериализуем в JSON для передачи в JS
+    cities_json = json.dumps(cities_by_region, ensure_ascii=False)
+
+    cart = request.session.get('cart', {})
+    for product_id, quantity in cart.items():
+        try:
+            product = Product.objects.get(id=product_id)
+            subtotal = product.price * quantity
+            total += subtotal
+            cart_items.append({
+                'product': product,
+                'quantity': quantity,
+                'subtotal': subtotal
+            })
+        except Product.DoesNotExist:
+            pass  # Игнорировать несуществующие товары
+    return render(request, 'app/shoping-cart.html', {
+        'cart_items': cart_items,
+        'total': total,
+        'cities_json': cities_json
+    })
+
+
+@csrf_exempt
+@require_POST
+def update_cart(request):
+    try:
+        data = json.loads(request.body)
+        product_id = str(data.get('product_id'))
+        quantity = int(data.get('quantity', 0))
+        
+        if quantity < 0:
+            quantity = 0
+        
+        cart = request.session.get('cart', {})
+        
+        if quantity == 0:
+            cart.pop(product_id, None)
+        else:
+            cart[product_id] = quantity
+        
+        request.session['cart'] = cart
+        
+        # Пересчитать итоги
+        total = 0
+        subtotal = 0
+        if product_id in cart:
+            product = Product.objects.get(id=product_id)
+            subtotal = product.price * cart[product_id]
+        
+        for pid, qty in cart.items():
+            try:
+                prod = Product.objects.get(id=pid)
+                total += prod.price * qty
+            except Product.DoesNotExist:
+                pass
+        
+        return JsonResponse({
+            'success': True,
+            'subtotal': subtotal,
+            'total': total,
+            'quantity': cart.get(product_id, 0)
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})

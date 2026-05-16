@@ -189,6 +189,21 @@
         }    
     });
 
+    /*==================================================================
+    [ Toggle extra categories ]
+    ============================================================*/
+    $('.js-toggle-cats').on('click', function(){
+        var $btn = $(this);
+        var $more = $('.more-cats');
+        if($more.is(':visible')){
+            $more.slideUp(200);
+            $btn.text('Показати всі');
+        } else {
+            $more.slideDown(200);
+            $btn.text('Показати менше');
+        }
+    });
+
 
 
 
@@ -213,16 +228,18 @@
     });
 
     /*==================================================================
-    [ +/- num product ]*/
-    $('.btn-num-product-down').on('click', function(){
-        var numProduct = Number($(this).next().val());
-        if(numProduct > 0) $(this).next().val(numProduct - 1);
-    });
+    // [ +/- num product ]*/
+    // $('.btn-num-product-down').on('click', function(){
+    //     var numProduct = Number($(this).next().val());
+    //     console.log(numProduct);
+    //     if(numProduct > 0) $(this).next().val(numProduct - 1);
+    // });
 
-    $('.btn-num-product-up').on('click', function(){
-        var numProduct = Number($(this).prev().val());
-        $(this).prev().val(numProduct + 1);
-    });
+    // $('.btn-num-product-up').on('click', function(){
+    //     var numProduct = Number($(this).prev().val());
+    //     console.log(numProduct);
+    //     $(this).prev().val(numProduct + 1);
+    // });
 
     /*==================================================================
     [ Rating ]*/

@@ -1,0 +1,179 @@
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap');
+
+body,
+.main-menu li a,
+div,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+a,
+.ltext-102,
+.stext-102 {
+    font-family: 'Ubuntu', sans-serif;
+}
+
+.main-menu li a {
+    font-weight: 500;
+    font-size: 1.1rem;
+    color: rgba(0, 0, 0, 0.608);
+}
+
+.banner {
+    margin-top: 2.5rem;
+    height: auto;
+    width: 100%;
+}
+
+.banner-title {
+    font-family: 'Ubuntu', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 500;
+    color: rgb(0, 0, 0);
+    margin-bottom: 2.5rem;
+    text-align: center;
+}
+
+.category-text {
+    background-color: white;
+    border-radius: 10px;
+    padding: 0.5rem;
+    position: absolute;
+    bottom: 10%;
+    right: 10%;
+}
+
+.block1-txt:hover .block1-name {
+    color: #000000;
+    border-radius: 10px;
+}
+
+.block1 {
+    border-radius: 5px;
+}
+
+.block1-img {
+    border-radius: 5px;
+    max-width: 100%;
+    height: 290px;
+
+    -webkit-box-shadow: -2px 14px 50px -26px rgba(0, 0, 0, 0.78);
+    box-shadow: -2px 14px 50px -26px rgba(0, 0, 0, 0.78);
+
+}
+
+.block1-txt {
+    border-radius: 5px;
+}
+
+.pic-product {
+    object-fit: scale-down;
+    width: 100%;
+    height: 100%;
+    border-radius: 5px;
+}
+.text-price{
+    font-size: 20px;
+    font-weight: bold;
+
+}
+.icon{
+    width: 25px;
+    height: 25px;
+}
+.contact-info{
+    width: 80%;
+}
+.if-old-price{
+    font-size: 20px;
+    font-weight: bold;
+    color: red;
+}
+.cart{
+    color: black;
+}
+.btn-remove-item{
+    text-align: center;
+    margin: 20px;
+}
+  
+.price-box{
+    width:280px;
+}
+
+.title{
+    font-size:28px;
+    margin-bottom:20px;
+}
+
+.inputs{
+    display:flex;
+    gap:10px;
+    margin-bottom:25px;
+}
+
+.inputs input{
+    width:100%;
+    height:42px;
+    border:1px solid #bdbdbd;
+    border-radius:8px;
+    padding:0 12px;
+    font-size:16px;
+    outline:none;
+    background:white;
+}
+
+.slider{
+    height:6px;
+    background:#bdbdbd;
+    border-radius:20px;
+    position:relative;
+    bottom:4px;
+}
+
+.progress{
+    position:absolute;
+    height:100%;
+    left:0%;
+    right:0%;
+    background:#00b533;
+    border-radius:20px;
+}
+
+.range-input{
+    position:relative;
+}
+
+.range-input input{
+    position:absolute;
+    width:100%;
+    top:-10px;
+    height:6px;
+    background:none;
+    pointer-events:none;
+    appearance:none;
+}
+
+.range-input input::-webkit-slider-thumb{
+    height:28px;
+    width:28px;
+    border-radius:50%;
+    background:#00b533;
+    border:none;
+    appearance:none;
+    pointer-events:auto;
+    cursor:pointer;
+}
+
+.range-input input::-moz-range-thumb{
+    height:28px;
+    width:28px;
+    border-radius:50%;
+    background:#00b533;
+    border:none;
+    pointer-events:auto;
+    cursor:pointer;
+}
