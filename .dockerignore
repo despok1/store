@@ -1,0 +1,16 @@
+.venv
+pycache
+*.pyc
+*.pyo
+*.pyd
+build/
+dist/
+.eggs/
+*.egg-info
+.env
+.env.*
+.vscode/
+.git
+media/
+staticfiles/
+.node_modules/
