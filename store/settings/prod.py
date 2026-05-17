@@ -2,9 +2,12 @@ from .base import *
 import os
 
 
-MIDDLEWARE += [
+# WhiteNoise should be inserted right after SecurityMiddleware.
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-]
+] + MIDDLEWARE[1:]
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')
 if not SECRET_KEY:

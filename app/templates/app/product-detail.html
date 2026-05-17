@@ -61,10 +61,9 @@
 										</div>
 									{% endfor %}
 									{% if not product.main_image and not product.images.exists %}
-										<div class="item-slick3" data-thumb="images/product-detail-01.jpg">
-											<div class="wrap-pic-w pos-relative">
-												<img src="images/product-detail-01.jpg" alt="IMG-PRODUCT">
-											</div>
+                                        <div class="item-slick3" data-thumb="{% static 'images/product-detail-01.jpg' %}">
+                                            <div class="wrap-pic-w pos-relative">
+                                                <img src="{% static 'images/product-detail-01.jpg' %}" alt="IMG-PRODUCT">
 										</div>
 									{% endif %}
 								

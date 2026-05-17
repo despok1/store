@@ -31,5 +31,5 @@ urlpatterns = [
     path('cart/update/', update_cart, name='update_cart'),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Serve uploaded media files even when DEBUG=False (needed on Railway).
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
