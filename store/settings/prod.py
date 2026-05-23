@@ -1,6 +1,9 @@
 from .base import *
 import os
 
+INSTALLED_APPS += [
+    "storages",
+]
 
 # WhiteNoise should be inserted right after SecurityMiddleware.
 MIDDLEWARE = [
