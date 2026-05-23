@@ -1,6 +1,9 @@
 from .base import *
 import os
 
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = False
+
 INSTALLED_APPS += [
     "storages",
 ]
@@ -16,11 +19,25 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 if not SECRET_KEY:
     raise ValueError('SECRET_KEY environment variable is not set')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+# MEDIA_URL = '/media/'
 
 
 
+
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_ENDPOINT_URL = os.environ.get('AWS_S3_ENDPOINT_URL')
+
+AWS_S3_CUSTOM_DOMAIN = os.environ.get('AWS_S3_CUSTOM_DOMAIN', '')
+
+AWS_QUERYSTRING_AUTH = False
+# AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'auto')
+# AWS_S3_SIGNATURE_VERSION = 's3v4'
+# AWS_DEFAULT_ACL = None
+# AWS_S3_OBJECT_PARAMETERS = {
+#     'CacheControl': 'max-age=86400',
+# }
 
 
 # CSRF trusted origins for Railway
@@ -52,30 +69,19 @@ SECURE_BROWSER_XSS_FILTER = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
-AWS_S3_ENDPOINT_URL = os.environ.get('AWS_S3_ENDPOINT_URL')
-AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'auto')
-AWS_S3_SIGNATURE_VERSION = 's3v4'
-AWS_DEFAULT_ACL = None
-AWS_QUERYSTRING_AUTH = False
-AWS_S3_CUSTOM_DOMAIN = os.environ.get('AWS_S3_CUSTOM_DOMAIN', '')
-AWS_S3_OBJECT_PARAMETERS = {
-    'CacheControl': 'max-age=86400',
-}
+
 
 # Set MEDIA_URL for R2
-if AWS_S3_CUSTOM_DOMAIN:
-    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
-elif AWS_STORAGE_BUCKET_NAME:
-    MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.r2.dev/'
-else:
-    MEDIA_URL = '/media/'
+# if AWS_S3_CUSTOM_DOMAIN:
+#     MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
+# elif AWS_STORAGE_BUCKET_NAME:
+#     MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.r2.dev/'
+# else:
 
 STORAGES = {
     "default": {
-        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        # "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "BACKEND": "storages.backends.s3.S3Storage",
         "OPTIONS": {
             "bucket_name": AWS_STORAGE_BUCKET_NAME,
             "location": "",
