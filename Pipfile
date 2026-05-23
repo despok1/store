@@ -13,6 +13,8 @@ django-summernote = "*"
 dj-database-url = "*"
 whitenoise = "*"
 gunicorn = "*"
+django-storages = {extras = ["s3"], version = "*"}
+boto3 = "*"
 
 [dev-packages]
 
