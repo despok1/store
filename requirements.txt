@@ -1,4 +1,5 @@
 asgiref==3.11.1
+django-sendgrid-v5==1.2.3
 bleach==6.3.0
 boto3==1.43.14
 botocore==1.43.14
