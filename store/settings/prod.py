@@ -54,7 +54,7 @@ if raw_csrf_trusted_origins:
             CSRF_TRUSTED_ORIGINS.append(f'https://{origin}')
 
 # Email settings for production
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'sendgrid.SendgridBackend'
 
 
 # Security settings for production
