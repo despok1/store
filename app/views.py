@@ -6,6 +6,7 @@ from django.conf import settings
 from django.utils import timezone
 from threading import Thread
 from functools import lru_cache
+import logging
 
 from .models import Product, Category
 from django.http import JsonResponse
@@ -16,14 +17,16 @@ import os
 from collections import defaultdict
 
 
+logger = logging.getLogger(__name__)
+
 def send_mail_async(subject, message, from_email, recipient_list):
     def _send():
         try:
             connection = get_connection(fail_silently=False, timeout=getattr(settings, 'EMAIL_TIMEOUT', 10))
             email = EmailMessage(subject, message, from_email, recipient_list, connection=connection)
             email.send(fail_silently=False)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.exception('Failed to send order email')
 
     Thread(target=_send, daemon=True).start()
 

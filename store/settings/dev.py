@@ -33,7 +33,10 @@ DATABASES = {
 }
 
 # Email settings (console backend for development)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+if os.getenv('EMAIL_HOST_USER') and os.getenv('EMAIL_HOST_PASSWORD'):
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
 # Development server port
