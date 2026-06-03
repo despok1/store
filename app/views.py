@@ -27,8 +27,14 @@ def send_resend_email(subject, message, from_email, recipient_list):
     if not api_key:
         raise ValueError('RESEND_API_KEY is not configured')
 
+    verified_from = getattr(settings, 'RESEND_FROM_EMAIL', None)
+    if verified_from:
+        from_address = verified_from
+    else:
+        from_address = from_email
+
     data = {
-        'from': from_email,
+        'from': from_address,
         'to': recipient_list,
         'subject': subject,
         'text': message,
