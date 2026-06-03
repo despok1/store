@@ -82,9 +82,7 @@
 				<li>
 					<a href="{% url 'product' %}">Магазин</a>
 				</li>
-				<li>
-					<a href="{% url 'contact' %}">Контакти</a>
-				</li>
+		
 				{% if user.is_staff %}
 				<li>
 					<a href="{% url 'admin:index' %}">🔒 Адмiнка</a>

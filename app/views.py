@@ -1,9 +1,11 @@
 from django.db.models import Q
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage, get_connection
 from django.conf import settings
 from django.utils import timezone
+from threading import Thread
+from functools import lru_cache
 
 from .models import Product, Category
 from django.http import JsonResponse
@@ -11,8 +13,34 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import json
 import os
-from django.conf import settings
 from collections import defaultdict
+
+
+def send_mail_async(subject, message, from_email, recipient_list):
+    def _send():
+        try:
+            connection = get_connection(fail_silently=False, timeout=getattr(settings, 'EMAIL_TIMEOUT', 10))
+            email = EmailMessage(subject, message, from_email, recipient_list, connection=connection)
+            email.send(fail_silently=False)
+        except Exception:
+            pass
+
+    Thread(target=_send, daemon=True).start()
+
+@lru_cache(maxsize=1)
+def get_cities_by_region():
+    json_path = os.path.join(settings.BASE_DIR, 'static', 'json', 'CitiesAndVillages - 14 March.json')
+    with open(json_path, 'r', encoding='utf-8') as f:
+        cities_data = json.load(f)
+
+    cities_by_region = defaultdict(list)
+    for item in cities_data:
+        region = item['region']
+        city = item['object_name']
+        if city not in cities_by_region[region]:
+            cities_by_region[region].append(city)
+    return cities_by_region
+
 
 def index(request):
     categories = Category.objects.all().order_by('order')
@@ -202,41 +230,21 @@ def cart(request):
                 message += f'\nЗагальна вартість: {total}грн\n'
                 message += f'Дата і час: {timezone.now().strftime("%Y-%m-%d %H:%M:%S")}\n'
                 
-                try:
-                    send_mail(
-                        subject,
-                        message,
-                        settings.DEFAULT_FROM_EMAIL,
-                        [settings.STORE_EMAIL],
-                        fail_silently=False,
-                    )
-                    messages.success(request, 'Замовлення успішно оформлено')
-                    # Clear cart
-                    request.session['cart'] = {}
-                    # request.session.modified = True
-                    # return redirect('cart')
-                except Exception as e:
-                    messages.error(request, f'Помилка при відправці замовлення: {str(e)}')
+                send_mail_async(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [settings.STORE_EMAIL],
+                )
+                messages.success(request, 'Замовлення успішно оформлено')
+                request.session['cart'] = {}
+                return redirect('cart')
     
     # Rest of the function...
     
     cart_items = []
     total = 0
-    json_path = os.path.join(settings.BASE_DIR, 'static', 'json', 'CitiesAndVillages - 14 March.json')
-    with open(json_path, 'r', encoding='utf-8') as f:
-        cities_data = json.load(f)
-
-    cities_by_region = defaultdict(list)
-    
-    # {"region1": ["city1", "city2", "..."],}
-    
-    for item in cities_data:
-        region = item['region']
-        city = item['object_name']
-        if city not in cities_by_region[region]:
-            cities_by_region[region].append(city)
-    
-    # Сериализуем в JSON для передачи в JS
+    cities_by_region = get_cities_by_region()
     cities_json = json.dumps(cities_by_region, ensure_ascii=False)
 
     cart = request.session.get('cart', {})
