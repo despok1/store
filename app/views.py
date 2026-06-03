@@ -1,12 +1,12 @@
 from django.db.models import Q
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-from django.core.mail import EmailMessage, get_connection
 from django.conf import settings
 from django.utils import timezone
 from threading import Thread
 from functools import lru_cache
 import logging
+import urllib3
 
 from .models import Product, Category
 from django.http import JsonResponse
@@ -19,14 +19,45 @@ from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
+http = urllib3.PoolManager()
+
+
+def send_resend_email(subject, message, from_email, recipient_list):
+    api_key = getattr(settings, 'RESEND_API_KEY', None)
+    if not api_key:
+        raise ValueError('RESEND_API_KEY is not configured')
+
+    data = {
+        'from': from_email,
+        'to': recipient_list,
+        'subject': subject,
+        'text': message,
+    }
+    encoded = json.dumps(data).encode('utf-8')
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {api_key}',
+    }
+    response = http.request(
+        'POST',
+        'https://api.resend.com/emails',
+        body=encoded,
+        headers=headers,
+        timeout=urllib3.util.Timeout(connect=10.0, read=30.0),
+    )
+
+    if response.status >= 400:
+        raise RuntimeError(
+            f'Resend API error {response.status}: {response.data.decode("utf-8", errors="replace")}'
+        )
+
+
 def send_mail_async(subject, message, from_email, recipient_list):
     def _send():
         try:
-            connection = get_connection(fail_silently=False, timeout=getattr(settings, 'EMAIL_TIMEOUT', 10))
-            email = EmailMessage(subject, message, from_email, recipient_list, connection=connection)
-            email.send(fail_silently=False)
-        except Exception as exc:
-            logger.exception('Failed to send order email')
+            send_resend_email(subject, message, from_email, recipient_list)
+        except Exception:
+            logger.exception('Failed to send order email via Resend')
 
     Thread(target=_send, daemon=True).start()
 
