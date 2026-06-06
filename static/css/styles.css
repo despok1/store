@@ -137,8 +137,8 @@ a,
 .progress{
     position:absolute;
     height:100%;
-    left:0%;
-    right:0%;
+    left:0;
+    width:0;
     background:#00b533;
     border-radius:20px;
 }

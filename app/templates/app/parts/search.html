@@ -22,7 +22,7 @@
 						{% endif %}
 					{% endfor %}
 					{% if categories|length > 6 %}
-					<button type="button" class="stext-106 cl6 bor3 trans-04 m-r-32 m-tb-5 js-toggle-cats">Показати всі</button>
+					<button type="button" class="stext-106 cl6 bor3 trans-04 m-r-32 m-tb-5 js-toggle-cats">Показати менше</button>
 					{% endif %}
 				</div>
 
@@ -156,9 +156,19 @@ const maxInput = document.getElementById("maxInput");
 const progress = document.querySelector(".progress");
 
 function updateSlider() {
+	progress.style.left = "0%";
 
     let minVal = parseInt(minRange.value);
     let maxVal = parseInt(maxRange.value);
+
+    if (isNaN(minVal)) {
+        minVal = parseInt(minRange.min) || 0;
+        minRange.value = minVal;
+    }
+    if (isNaN(maxVal)) {
+        maxVal = parseInt(maxRange.max) || minVal;
+        maxRange.value = maxVal;
+    }
 
     if(minVal > maxVal - 1){
         minVal = maxVal - 1;
@@ -173,10 +183,14 @@ function updateSlider() {
     minInput.value = minVal;
     maxInput.value = maxVal;
 
-    const max = parseInt(minRange.max);
+    const rangeMin = parseInt(minRange.min) || 0;
+    const rangeMax = parseInt(minRange.max) || 1;
+    const totalRange = Math.max(rangeMax - rangeMin, 1);
+    const leftPercent = ((minVal - rangeMin) / totalRange) * 100;
+    const widthPercent = ((maxVal - minVal) / totalRange) * 100;
 
-    progress.style.left = (minVal / max) * 100 + "%";
-    progress.style.right = 100 - (maxVal / max) * 100 + "%";
+    progress.style.left = leftPercent + "%";
+    progress.style.width = widthPercent + "%";
 }
 
 minRange.addEventListener("input", updateSlider);
@@ -192,5 +206,7 @@ maxInput.addEventListener("input", () => {
     updateSlider();
 });
 
+progress.style.left = "0%";
+progress.style.width = "0%";
 updateSlider();
 </script>

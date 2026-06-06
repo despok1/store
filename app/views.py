@@ -83,7 +83,7 @@ def get_cities_by_region():
 
 
 def index(request):
-    categories = Category.objects.filter(is_featured=True).order_by('order')
+    categories = Category.objects.all().order_by('order')
     products = Product.objects.all().order_by('-is_featured', '-date_published') #! featured first, then by date
     return render(request, 'app/index.html', {'products': products, 'categories': categories})
 
