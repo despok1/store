@@ -225,31 +225,35 @@
 
 
 	{% comment %} <script src="{% static 'js/main.js' %}"></script> {% endcomment %}
-  	<script src="{% static 'vendor/jquery/jquery-3.2.1.min.js' %}"></script>
+{% block extra_scripts %}
+	<script src="{% static 'vendor/select2/select2.min.js' %}"></script>
 	<script>
 		$(document).ready(function() {
 			// Обработка клика на кнопку минус
 			$('.btn-num-product-down').on('click', function() {
-							var cartKey = $(this).data('cart-key');
-							var input = $('input[data-cart-key="' + cartKey + '"]');
-							var currentQty = parseInt(input.val());
-							if (currentQty > 0) {
-								updateCart(cartKey, currentQty - 1, input);
+				var cartKey = $(this).data('cart-key');
+				var input = $('input[data-cart-key="' + cartKey + '"]');
+				var currentQty = parseInt(input.val());
+				if (currentQty > 0) {
+					updateCart(cartKey, currentQty - 1, input);
+				}
 			});
 
 			// Обработка клика на кнопку плюс
 			$('.btn-num-product-up').on('click', function() {
-							var cartKey = $(this).data('cart-key');
-							var input = $('input[data-cart-key="' + cartKey + '"]');
-							var currentQty = parseInt(input.val());
-							updateCart(cartKey, currentQty + 1, input);
+				var cartKey = $(this).data('cart-key');
+				var input = $('input[data-cart-key="' + cartKey + '"]');
+				var currentQty = parseInt(input.val());
+				updateCart(cartKey, currentQty + 1, input);
+			});
 
 			// Обработка клика на кнопку удаления
 			$('.btn-remove-item').on('click', function() {
-							var cartKey = $(this).data('cart-key');
-							var row = $(this).closest('tr');
-							if (confirm('Ви впевнені, що хочете видалити цей товар з кошика?')) {
-								updateCart(cartKey, 0, row);
+				var cartKey = $(this).data('cart-key');
+				var row = $(this).closest('tr');
+				if (confirm('Ви впевнені, що хочете видалити цей товар з кошика?')) {
+					updateCart(cartKey, 0, row);
+				}
 			});
 
 			function updateCart(cartKey, newQty, inputElement) {
@@ -265,21 +269,16 @@
 						if (response.success) {
 							if (inputElement) {
 								if (response.quantity == 0) {
-									// Удалить строку
 									inputElement.closest('tr').remove();
 								} else {
 									inputElement.val(response.quantity);
-									// Обновить subtotal для этого товара
 									var row = inputElement.closest('tr');
 									row.find('.column-5').text(response.subtotal + 'грн');
 								}
 							}
-							// Обновить общий итог
 							$('.mtext-110.cl2').last().text(response.total + 'грн');
-							
-							// Если корзина пуста, показать сообщение
 							if (response.total == 0) {
-								location.reload(); // Перезагрузить страницу, чтобы показать пустую корзину
+								location.reload();
 							}
 						} else {
 							alert('Помилка: ' + response.error);
@@ -290,36 +289,30 @@
 					}
 				});
 			}
+
+			const citiesData = {{ cities_json|safe }};
+			$('.js-select2').each(function () {
+				$(this).select2({
+					minimumResultsForSearch: 20,
+					dropdownParent: $(this).next('.dropDownSelect2')
+				});
+			});
+
+			const citySelect = $('.select-city');
+			function capitalize(str) {
+				return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+			}
+
+			$('.select-oblast').on('select2:select', function (e) {
+				var data = e.params.data.text;
+				const cityOptions = citiesData[data.toUpperCase()] || [];
+				citySelect.empty();
+				citySelect.append('<option>Виберіть Місто...</option>');
+				cityOptions.forEach(city => {
+					citySelect.append(`<option value="${capitalize(city)}">${capitalize(city)}</option>`);
+				});
+			});
 		});
-		
-		
-	const citiesData = {{ cities_json|safe }};
-	console.log(citiesData);
-		
 	</script>
-	<script src="{% static 'vendor/select2/select2.min.js' %}"></script>
-    <script>
-      $('.js-select2').each(function () {
-        $(this).select2({
-          minimumResultsForSearch: 20,
-          dropdownParent: $(this).next('.dropDownSelect2')
-        })
-      })
-
-	const citySelect = $('.select-city');
-	function capitalize(str) {
-  		return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-	}
-    $('.select-oblast').on('select2:select', function (e) {
-			var data = e.params.data.text;
-			const cityOptions = citiesData[data.toUpperCase()];
-			citySelect.empty();
-    		citySelect.append('<option>Виберіть Місто...</option>');
-			cityOptions.forEach(city => {
-        		citySelect.append(`<option value="${capitalize(city)}">${capitalize(city)}</option>`);
-    		});
-		});
-		
-    </script>
-
+{% endblock extra_scripts %}
 {% endblock %}
