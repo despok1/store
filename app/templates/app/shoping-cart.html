@@ -61,7 +61,7 @@
 									<th class="column-6">Дія</th>
 								</tr>
 								{% for item in cart_items %}
-								<tr class="table_row">
+								<tr class="table_row" data-cart-key="{{ item.key }}">
 									<td class="column-1">
 										<div class="how-itemcart1">
 											{% if item.product.main_image %}
@@ -71,24 +71,29 @@
 											{% endif %}
 										</div>
 									</td>
-									<td class="column-2">{{ item.product.title }}</td>
-									<td class="column-3">{{ item.product.price }}грн</td>
+									<td class="column-2">
+							{{ item.product.title }}
+							{% if item.variant %}
+								<div class="stext-107">{{ item.variant.name }}</div>
+							{% endif %}
+						</td>
+									<td class="column-3">{{ item.price }}грн</td>
 									<td class="column-4">
 										<div class="wrap-num-product flex-w m-l-auto m-r-0">
-											<div class="btn-num-product-down cl8 hov-btn3 trans-04 flex-c-m" data-product-id="{{ item.product.id }}">
+											<div class="btn-num-product-down cl8 hov-btn3 trans-04 flex-c-m" data-cart-key="{{ item.key }}">
 												<i class="fs-16 zmdi zmdi-minus"></i>
 											</div>
 
-											<input class="mtext-104 cl3 txt-center num-product" type="number" name="num-product{{ forloop.counter }}" value="{{ item.quantity }}" data-product-id="{{ item.product.id }}" readonly>
+											<input class="mtext-104 cl3 txt-center num-product" type="number" name="num-product{{ forloop.counter }}" value="{{ item.quantity }}" data-cart-key="{{ item.key }}" readonly>
 
-											<div class="btn-num-product-up cl8 hov-btn3 trans-04 flex-c-m" data-product-id="{{ item.product.id }}">
+											<div class="btn-num-product-up cl8 hov-btn3 trans-04 flex-c-m" data-cart-key="{{ item.key }}">
 												<i class="fs-16 zmdi zmdi-plus"></i>
 											</div>
 										</div>
 									</td>
 									<td class="column-5">{{ item.subtotal }}грн</td>
 									<td class="column-6">
-										<button class="btn-remove-item" data-product-id="{{ item.product.id }}" title="Видалити товар">
+										<button class="btn-remove-item" data-cart-key="{{ item.key }}" title="Видалити товар">
 											<i class="fa fa-trash-o"></i>
 										</button>
 									</td>
@@ -225,38 +230,35 @@
 		$(document).ready(function() {
 			// Обработка клика на кнопку минус
 			$('.btn-num-product-down').on('click', function() {
-				var productId = $(this).data('product-id');
-				var input = $('input[data-product-id="' + productId + '"]');
-				var currentQty = parseInt(input.val());
-				if (currentQty > 0) {
-					updateCart(productId, currentQty - 1, input);
-				}
+							var cartKey = $(this).data('cart-key');
+							var input = $('input[data-cart-key="' + cartKey + '"]');
+							var currentQty = parseInt(input.val());
+							if (currentQty > 0) {
+								updateCart(cartKey, currentQty - 1, input);
 			});
 
 			// Обработка клика на кнопку плюс
 			$('.btn-num-product-up').on('click', function() {
-				var productId = $(this).data('product-id');
-				var input = $('input[data-product-id="' + productId + '"]');
-				var currentQty = parseInt(input.val());
-				updateCart(productId, currentQty + 1, input);
-			});
+							var cartKey = $(this).data('cart-key');
+							var input = $('input[data-cart-key="' + cartKey + '"]');
+							var currentQty = parseInt(input.val());
+							updateCart(cartKey, currentQty + 1, input);
 
 			// Обработка клика на кнопку удаления
 			$('.btn-remove-item').on('click', function() {
-				var productId = $(this).data('product-id');
-				var row = $(this).closest('tr');
-				if (confirm('Ви впевнені, що хочете видалити цей товар з кошика?')) {
-					updateCart(productId, 0, row);
-				}
+							var cartKey = $(this).data('cart-key');
+							var row = $(this).closest('tr');
+							if (confirm('Ви впевнені, що хочете видалити цей товар з кошика?')) {
+								updateCart(cartKey, 0, row);
 			});
 
-			function updateCart(productId, newQty, inputElement) {
+			function updateCart(cartKey, newQty, inputElement) {
 				$.ajax({
 					url: '{% url "update_cart" %}',
 					type: 'POST',
 					contentType: 'application/json',
 					data: JSON.stringify({
-						product_id: productId,
+						cart_key: cartKey,
 						quantity: newQty
 					}),
 					success: function(response) {

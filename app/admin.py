@@ -23,6 +23,11 @@ class ProductImageInline(admin.TabularInline):
 	extra = 1
 
 
+class VariantInline(admin.TabularInline):
+	model = models.Variant
+	extra = 1
+
+
 # class ProductFeatureInline(admin.TabularInline):
 # 	model = models.ProductFeature
 # 	extra = 1
@@ -34,8 +39,15 @@ class ProductAdmin(SummernoteModelAdmin):
 	list_display = ('title', 'category', 'subcategory', 'price', 'in_stock', 'date_published')
 	list_filter = ('category', 'subcategory', 'in_stock')
 	search_fields = ('title', 'description', 'slug')
-	inlines = (ProductImageInline,)
+	inlines = (ProductImageInline, VariantInline)
 	prepopulated_fields = {'slug': ('title',)}
+
+
+@admin.register(models.Variant)
+class VariantAdmin(admin.ModelAdmin):
+	list_display = ('product', 'name', 'price', 'old_price', 'in_stock', 'stock')
+	list_filter = ('product', 'in_stock')
+	search_fields = ('name', 'product__title')
 
 
 @admin.register(models.ProductImage)

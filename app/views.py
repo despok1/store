@@ -83,7 +83,7 @@ def get_cities_by_region():
 
 
 def index(request):
-    categories = Category.objects.all().order_by('order')
+    categories = Category.objects.filter(is_featured=True).order_by('order')
     products = Product.objects.all().order_by('-is_featured', '-date_published') #! featured first, then by date
     return render(request, 'app/index.html', {'products': products, 'categories': categories})
 
@@ -179,6 +179,7 @@ def product_list(request):
 
 def product_detail(request, slug):
     product = get_object_or_404(Product, slug=slug)
+    variants = product.variants.all()
     
     # Get related products from the same category
     related_products = Product.objects.filter(
@@ -192,7 +193,8 @@ def product_detail(request, slug):
     
     return render(request, 'app/product-detail.html', {
         'product': product,
-        'related_products': related_products
+        'related_products': related_products,
+        'variants': variants
     })
 
 def contact(request):
@@ -203,13 +205,15 @@ def cart(request):
         if 'product_id' in request.POST:
             # Add to cart
             product_id = request.POST.get('product_id')
+            variant_id = request.POST.get('variant_id')
             quantity = int(request.POST.get('quantity', 1))
             if product_id:
                 cart = request.session.get('cart', {})
-                if product_id in cart:
-                    cart[product_id] += quantity
+                cart_key = f'{product_id}:{variant_id}' if variant_id else str(product_id)
+                if cart_key in cart:
+                    cart[cart_key] += quantity
                 else:
-                    cart[product_id] = quantity
+                    cart[cart_key] = quantity
                 request.session['cart'] = cart
                 messages.success(request, 'Товар додано в кошик!')
         elif 'name' in request.POST:
@@ -241,15 +245,28 @@ def cart(request):
                 # Get cart items
                 cart_items = []
                 total = 0
-                for product_id, quantity in cart.items():
+                for cart_key, quantity in cart.items():
+                    product_id, variant_id = cart_key.split(':') if ':' in cart_key else (cart_key, None)
                     try:
                         product = Product.objects.get(id=product_id)
-                        subtotal = product.price * quantity
+                        variant = None
+                        price = product.price
+                        old_price = product.old_price
+                        if variant_id:
+                            variant = product.variants.filter(id=variant_id).first()
+                            if variant:
+                                price = variant.price
+                                old_price = variant.old_price
+                        subtotal = price * quantity
                         total += subtotal
                         cart_items.append({
                             'product': product,
+                            'variant': variant,
+                            'price': price,
+                            'old_price': old_price,
                             'quantity': quantity,
-                            'subtotal': subtotal
+                            'subtotal': subtotal,
+                            'key': cart_key,
                         })
                     except Product.DoesNotExist:
                         pass
@@ -265,7 +282,10 @@ def cart(request):
 Товари:
 '''
                 for item in cart_items:
-                    message += f'- {item["product"].title} (кількість: {item["quantity"]}, ціна: {item["product"].price}грн, всього: {item["subtotal"]}грн)\n'
+                    title = item['product'].title
+                    if item['variant']:
+                        title = f"{title} — {item['variant'].name}"
+                    message += f'- {title} (кількість: {item["quantity"]}, ціна: {item["price"]}грн, всього: {item["subtotal"]}грн)\n'
                 
                 message += f'\nЗагальна вартість: {total}грн\n'
                 message += f'Дата і час: {timezone.now().strftime("%Y-%m-%d %H:%M:%S")}\n'
@@ -288,15 +308,28 @@ def cart(request):
     cities_json = json.dumps(cities_by_region, ensure_ascii=False)
 
     cart = request.session.get('cart', {})
-    for product_id, quantity in cart.items():
+    for cart_key, quantity in cart.items():
+        product_id, variant_id = cart_key.split(':') if ':' in cart_key else (cart_key, None)
         try:
             product = Product.objects.get(id=product_id)
-            subtotal = product.price * quantity
+            variant = None
+            price = product.price
+            old_price = product.old_price
+            if variant_id:
+                variant = product.variants.filter(id=variant_id).first()
+                if variant:
+                    price = variant.price
+                    old_price = variant.old_price
+            subtotal = price * quantity
             total += subtotal
             cart_items.append({
                 'product': product,
+                'variant': variant,
+                'price': price,
+                'old_price': old_price,
                 'quantity': quantity,
-                'subtotal': subtotal
+                'subtotal': subtotal,
+                'key': cart_key,
             })
         except Product.DoesNotExist:
             pass  # Игнорировать несуществующие товары
@@ -312,7 +345,7 @@ def cart(request):
 def update_cart(request):
     try:
         data = json.loads(request.body)
-        product_id = str(data.get('product_id'))
+        cart_key = str(data.get('cart_key') or data.get('product_id'))
         quantity = int(data.get('quantity', 0))
         
         if quantity < 0:
@@ -321,23 +354,35 @@ def update_cart(request):
         cart = request.session.get('cart', {})
         
         if quantity == 0:
-            cart.pop(product_id, None)
+            cart.pop(cart_key, None)
         else:
-            cart[product_id] = quantity
+            cart[cart_key] = quantity
         
         request.session['cart'] = cart
         
         # Пересчитать итоги
         total = 0
         subtotal = 0
-        if product_id in cart:
+        if cart_key in cart:
+            product_id, variant_id = cart_key.split(':') if ':' in cart_key else (cart_key, None)
             product = Product.objects.get(id=product_id)
-            subtotal = product.price * cart[product_id]
+            price = product.price
+            if variant_id:
+                variant = product.variants.filter(id=variant_id).first()
+                if variant:
+                    price = variant.price
+            subtotal = price * cart[cart_key]
         
-        for pid, qty in cart.items():
+        for key, qty in cart.items():
             try:
-                prod = Product.objects.get(id=pid)
-                total += prod.price * qty
+                product_id, variant_id = key.split(':') if ':' in key else (key, None)
+                prod = Product.objects.get(id=product_id)
+                price = prod.price
+                if variant_id:
+                    variant = prod.variants.filter(id=variant_id).first()
+                    if variant:
+                        price = variant.price
+                total += price * qty
             except Product.DoesNotExist:
                 pass
         
@@ -345,7 +390,7 @@ def update_cart(request):
             'success': True,
             'subtotal': subtotal,
             'total': total,
-            'quantity': cart.get(product_id, 0)
+            'quantity': cart.get(cart_key, 0)
         })
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})

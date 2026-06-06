@@ -13,6 +13,7 @@ class Category(models.Model):
 	slug = models.SlugField(max_length=160, unique=True, blank=True)
 	order = models.PositiveIntegerField(default=0)
 	image = models.ImageField(upload_to='categories/', blank=True, null=True)
+	is_featured = models.BooleanField(default=False)
  
 	class Meta:
 		db_table = 'categories'
@@ -48,6 +49,21 @@ class SubCategory(models.Model):
 			self.slug = slugify(self.name)
 		super().save(*args, **kwargs)
 
+class Variant(models.Model):
+	product = models.ForeignKey('Product', related_name='variants', on_delete=models.CASCADE)
+	name = models.CharField(max_length=150)
+	image = models.ImageField(upload_to='products/variants/', blank=True, null=True)
+	price = models.PositiveIntegerField(default=0)
+	old_price = models.PositiveIntegerField(default=0) 
+	in_stock = models.BooleanField(default=True)
+	stock = models.PositiveIntegerField(default=0)
+
+	class Meta:
+		db_table = 'product_variants'
+		unique_together = ('product', 'name')
+
+	def __str__(self):
+		return f"{self.product.title} — {self.name}"
 
 # Основная модель продукта
 class Product(models.Model):

@@ -79,24 +79,62 @@
 								{{ product.title }}
 							</h4>
 
-							   {% if product.old_price %}
-							   <span class="stext-105  if-old-price ">
-								   {{ product.price }}грн
-							   </span>
-										<span class="stext-105 ">
-											<s>{{ product.old_price }}грн</s>
-										</span>
-									{% endif %}
-									{% if not product.old_price %}
-										<span class="stext-105 cl3 text-price">
-											{{ product.price }} грн
-										</span>
-									{% endif %}
+{% if product.variants.exists %}
+						{% with selected_variant=product.variants.first %}
+							{% if selected_variant.old_price %}
+								<span id="price-current" class="stext-105 if-old-price">
+									{{ selected_variant.price }} грн
+								</span>
+								<span id="price-old" class="stext-105">
+									<s class="old-price">{{ selected_variant.old_price }} грн</s>
+								</span>
+							{% else %}
+								<span id="price-current" class="stext-105 cl3 text-price">
+									{{ selected_variant.price }} грн
+								</span>
+								<span id="price-old" class="stext-105" style="display: none;">
+									<s class="old-price"></s>
+								</span>
+							{% endif %}
+						{% endwith %}
+					{% else %}
+						{% if product.old_price %}
+							<span class="stext-105 if-old-price">
+								{{ product.price }} грн
+							</span>
+							<span class="stext-105">
+								<s class="old-price">{{ product.old_price }} грн</s>
+							</span>
+						{% else %}
+							<span id="price-current" class="stext-105 cl3 text-price">
+								{{ product.price }} грн
+							</span>
+							<span id="price-old" class="stext-105" style="display: none;">
+								<s class="old-price"></s>
+							</span>
+						{% endif %}
+					{% endif %}
 
 							<p class="stext-102 cl3 p-t-23">
 								{{ product.description|linebreaksbr }}
 							</p>
-						
+							{% if product.variants.exists %}
+								<div>
+									<h5 class="mtext-103">Варіанти</h5>
+									<ul>
+										<div class="rs1-select2 rs2-select2 bor8 bg0 m-b-12 m-t-9">
+								<select class="select-oblast js-select2 js-variant-select" name="variant_select">
+										{% for variant in product.variants.all %}
+											<option class="option" data-price="{{ variant.price }}" data-old-price="{{ variant.old_price }}" value="{{ variant.id }}">{{ variant.name }}</option>
+										{% endfor %}
+										</select>
+										<div class="dropDownSelect2">
+											
+										</div>
+									</div>
+									</ul>
+								</div>
+							{% endif %}
 							<!--  -->
 							<div class="p-t-33">
 								{% if product.features %}
@@ -144,6 +182,9 @@
 								<form method="post" action="{% url 'cart' %}" class="dis-flex p-l-15">
 									{% csrf_token %}
 									<input type="hidden" name="product_id" value="{{ product.id }}">
+							{% if product.variants.exists %}
+								<input type="hidden" name="variant_id" value="{{ product.variants.first.id }}">
+							{% endif %}
 									<button class="flex-c-m stext-101 cl0 size-101 bg1 bor1 hov-btn1 p-lr-15 trans-04 js-addcart-detail">
 										Додати в кошик
 									</button>
@@ -260,23 +301,66 @@
 
 
 
+<script src={% static "vendor/jquery/jquery-3.2.1.min.js" %}></script>
+<script src={% static "vendor/select2/select2.min.js" %}></script>
+<script>
+	$(".js-select2").each(function(){
+		$(this).select2({
+			minimumResultsForSearch: 20,
+			dropdownParent: $(this).next('.dropDownSelect2')
+		});
+	});
+
+	function updateVariantPrice() {
+		var select = document.querySelector('.js-variant-select');
+		var priceCurrent = document.getElementById('price-current');
+		var priceOldWrapper = document.getElementById('price-old');
+		var oldPriceNode = priceOldWrapper ? priceOldWrapper.querySelector('.old-price') : null;
+		var hiddenVariant = document.querySelector('input[name="variant_id"]');
+		if (!select || !priceCurrent || !hiddenVariant) {
+			return;
+		}
+
+		var option = select.options[select.selectedIndex];
+		var price = option ? option.dataset.price : '';
+		var oldPrice = option ? option.dataset.oldPrice : '';
+
+		priceCurrent.textContent = price ? price + ' грн' : '';
+
+		if (oldPrice && oldPrice !== '0') {
+			if (priceOldWrapper) {
+				priceOldWrapper.style.display = 'inline';
+			}
+			if (oldPriceNode) {
+				oldPriceNode.textContent = oldPrice + ' грн';
+			}
+			priceCurrent.classList.remove('text-price');
+			priceCurrent.classList.add('if-old-price');
+		} else {
+			if (priceOldWrapper) {
+				priceOldWrapper.style.display = 'none';
+			}
+			priceCurrent.classList.remove('if-old-price');
+			priceCurrent.classList.add('text-price');
+		}
+
+		hiddenVariant.value = option ? option.value : '';
+	}
+
+	$('.js-variant-select').on('select2:select change', function () {
+		updateVariantPrice();
+	});
+
+	updateVariantPrice();
+</script>
+
 {% comment %} <!--===============================================================================================-->	
-	<script src="vendor/jquery/jquery-3.2.1.min.js"></script>
 <!--===============================================================================================-->
 	<script src="vendor/animsition/js/animsition.min.js"></script>
 <!--===============================================================================================-->
 	<script src="vendor/bootstrap/js/popper.js"></script>
 	<script src="vendor/bootstrap/js/bootstrap.min.js"></script>
 <!--===============================================================================================-->
-	<script src="vendor/select2/select2.min.js"></script>
-	<script>
-		$(".js-select2").each(function(){
-			$(this).select2({
-				minimumResultsForSearch: 20,
-				dropdownParent: $(this).next('.dropDownSelect2')
-			});
-		})
-	</script>
 <!--===============================================================================================-->
 	<script src="vendor/daterangepicker/moment.min.js"></script>
 	<script src="vendor/daterangepicker/daterangepicker.js"></script>
