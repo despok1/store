@@ -43,7 +43,7 @@
 									{% if product.main_image %}
 										<div class="item-slick3" data-thumb="{{ product.main_image.url }}">
 											<div class="wrap-pic-w pos-relative">
-												<img src="{{ product.main_image.url }}" alt="{{ product.title }}">
+												<img loading="lazy" src="{{ product.main_image.url }}" alt="{{ product.title }}">
 												<a class="flex-c-m size-108 how-pos1 bor0 fs-16 cl10 bg0 hov-btn3 trans-04" href="{{ product.main_image.url }}">
 													<i class="fa fa-expand"></i>
 												</a>
@@ -53,7 +53,7 @@
 									{% for img in product.images.all %}
 										<div class="item-slick3" data-thumb="{{ img.image.url }}">
 											<div class="wrap-pic-w pos-relative">
-												<img src="{{ img.image.url }}" alt="{{ product.title }}">
+												<img loading="lazy" src="{{ img.image.url }}" alt="{{ product.title }}">
 												<a class="flex-c-m size-108 how-pos1 bor0 fs-16 cl10 bg0 hov-btn3 trans-04" href="{{ img.image.url }}">
 													<i class="fa fa-expand"></i>
 												</a>
@@ -63,7 +63,7 @@
 									{% if not product.main_image and not product.images.exists %}
                                         <div class="item-slick3" data-thumb="{% static 'images/product-detail-01.jpg' %}">
                                             <div class="wrap-pic-w pos-relative">
-                                                <img src="{% static 'images/product-detail-01.jpg' %}" alt="IMG-PRODUCT">
+                                                <img loading="lazy" src="{% static 'images/product-detail-01.jpg' %}" alt="IMG-PRODUCT">
 										</div>
 									{% endif %}
 								
@@ -242,9 +242,9 @@
 						<div class="block2">
 							<div class="block2-pic hov-img0">
 								{% if related_product.main_image %}
-									<img class="pic-product" src="{{ related_product.main_image.url }}" alt="{{ related_product.title }}">
+									<img loading="lazy" class="pic-product" src="{{ related_product.main_image.url }}" alt="{{ related_product.title }}">
 								{% else %}
-									<img class="pic-product" src="{% static 'images/placeholder.png' %}" alt="{{ related_product.title }}">
+									<img loading="lazy" class="pic-product" src="{% static 'images/placeholder.png' %}" alt="{{ related_product.title }}">
 								{% endif %}
 
 								<a href="{% url 'product_detail' related_product.slug %}" class="block2-btn flex-c-m stext-103 cl2 size-102 bg0 bor2 hov-btn1 p-lr-15 trans-04 ">

@@ -1,0 +1,42 @@
+{% load static %}
+{% for p in products %}
+<div class="col-sm-6 col-md-4 col-lg-3 p-b-35 isotope-item {% if p.category %}{{ p.category.slug }}{% endif %}">
+    <div class="block2">
+        <div class="block2-pic hov-img0">
+            {% if p.main_image %}
+                <img loading="lazy" class="pic-product" src="{{ p.main_image.url }}" alt="{{ p.title }}">
+            {% else %}
+                <img loading="lazy" class="pic-product" src="{% static 'images/default-product.jpg' %}" alt="No Image">
+            {% endif %}
+
+            <a href="{% url 'product_detail' p.slug %}" class="block2-btn flex-c-m stext-103 cl2 size-102 bg0 bor2 hov-btn1 p-lr-15 trans-04">
+                Детальніше
+            </a>
+        </div>
+
+        <div class="block2-txt flex-w flex-t p-t-14">
+            <div class="block2-txt-child1 flex-col-l ">
+                <a href="{% url 'product_detail' p.slug %}" class="stext-104 cl4 hov-cl1 trans-04 js-name-b2 p-b-6">
+                    {{ p.title }}
+                </a>
+
+                {% if p.old_price %}
+                    <span class="stext-105 ">
+                        <s>{{ p.old_price }}грн</s>
+                    </span>
+                    <span class="stext-105  if-old-price ">
+                        {{ p.price }}грн
+                    </span>
+                {% else %}
+                    <span class="stext-105 cl3 text-price">
+                        {{ p.price }} грн
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% if products|length == 0 %}
+<p>No products found.</p>
+{% endif %}

@@ -19,7 +19,7 @@
         <ul class="header-cart-wrapitem w-full">
           <li class="header-cart-item flex-w flex-t m-b-12">
             <div class="header-cart-item-img">
-              <img src="{% static 'images/item-cart-01.jpg' %}" alt="IMG" />
+              <img loading="lazy" src="{% static 'images/item-cart-01.jpg' %}" alt="IMG" />
             </div>
 
             <div class="header-cart-item-txt p-t-8">
@@ -31,7 +31,7 @@
 
           <li class="header-cart-item flex-w flex-t m-b-12">
             <div class="header-cart-item-img">
-              <img src="{% static 'images/item-cart-02.jpg' %}" alt="IMG" />
+              <img loading="lazy" src="{% static 'images/item-cart-02.jpg' %}" alt="IMG" />
             </div>
 
             <div class="header-cart-item-txt p-t-8">
@@ -43,7 +43,7 @@
 
           <li class="header-cart-item flex-w flex-t m-b-12">
             <div class="header-cart-item-img">
-              <img src="{% static 'images/item-cart-03.jpg' %}" alt="IMG" />
+              <img loading="lazy" src="{% static 'images/item-cart-03.jpg' %}" alt="IMG" />
             </div>
 
             <div class="header-cart-item-txt p-t-8">
@@ -86,55 +86,15 @@
         <h3 class="ltext-103 cl5">Популярні товари</h3>
       </div>
 
-      <div class="row isotope-grid">
-        {% for p in products %}
-          <div class="col-sm-6 col-md-4 col-lg-3 p-b-35 isotope-item {% if p.category %}{{ p.category.slug }}{% endif %}">
-            <div class="block2">
-              <div class="block2-pic hov-img0">
-                {% if p.main_image %}
-                  <img class="pic-product" src="{{ p.main_image.url }}" alt="{{ p.title }}" />
-                {% else %}
-                  <img class="pic-product" src="{% static 'images/default-product.jpg' %}" alt="No Image" />
-                {% endif %}
-
-                <a href="{% url 'product_detail' p.slug %}" class="block2-btn flex-c-m stext-103 cl2 size-102 bg0 bor2 hov-btn1 p-lr-15 trans-04">Детальніше</a>
-              </div>
-
-              <div class="block2-txt flex-w flex-t p-t-14">
-                <div class="block2-txt-child1 flex-col-l">
-                  <a href="{% url 'product_detail' p.slug %}" class="stext-104 cl4 hov-cl1 trans-04 js-name-b2 p-b-6">{{ p.title }}</a>
-
-                  {% if p.old_price %}
-										<span class="stext-105 ">
-											<s>{{ p.old_price }}грн</s>
-										</span>
-										<span class="stext-105  if-old-price ">
-											{{ p.price }}грн
-										</span>
-									{% endif %}
-									{% if not p.old_price %}
-										<span class="stext-105 cl3 text-price">
-											{{ p.price }} грн
-										</span>
-									{% endif %}
-                </div>
-
-                <div class="block2-txt-child2 flex-r p-t-3">
-                  <a href="#" class="btn-addwish-b2 dis-block pos-relative js-addwish-b2">
-                    
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        {% empty %}
-          <p>No products found.</p>
-        {% endfor %}
+<div class="row isotope-grid" id="product-grid">
+        {% include 'app/parts/product_grid_items.html' %}
       </div>
 
       <!-- Load more -->
-      <div class="flex-c-m flex-w w-full p-t-45">
-        <a href="#" class="flex-c-m stext-101 cl5 size-103 bg2 bor1 hov-btn1 p-lr-15 trans-04">Load More</a>
+      <div class="flex-c-m flex-w w-full p-t-45" id="load-more-container" {% if not page_obj or not page_obj.has_next %}style="display:none;"{% endif %}>
+        <a href="#" id="load-more-button" class="flex-c-m stext-101 cl5 size-103 bg2 bor1 hov-btn1 p-lr-15 trans-04" data-next-page="{% if page_obj and page_obj.has_next %}{{ page_obj.next_page_number }}{% else %}2{% endif %}" data-base-url="{% url 'home' %}?{% if query_string %}{{ query_string }}&{% endif %}ajax=1&">
+          Load More
+        </a>
       </div>
     </div>
   </section>
@@ -146,6 +106,51 @@
     <span class="symbol-btn-back-to-top"><i class="zmdi zmdi-chevron-up"></i></span>
   </div>
 
- 
- 
 {% endblock %}
+
+{% block extra_scripts %}
+<script>
+	$(function() {
+		var $container = $('#product-grid');
+		var $loadMore = $('#load-more-container');
+
+		$(document).on('click', '#load-more-button', function(event) {
+			event.preventDefault();
+			var $btn = $(this);
+			var nextPage = parseInt($btn.data('next-page'), 10);
+			if (!$btn.length || isNaN(nextPage) || !$container.length) {
+				return;
+			}
+			if ($btn.data('loading')) {
+				return;
+			}
+			$btn.data('loading', true).text('Loading...');
+			var url = $btn.data('base-url') + 'page=' + nextPage;
+
+			$.get(url)
+				.done(function(data) {
+					if (data.html) {
+						var $items = $(data.html);
+						$container.append($items);
+						if ($.fn.isotope && $container.data('isotope')) {
+							$container.isotope('appended', $items);
+							$container.isotope('layout');
+						}
+					}
+
+					if (data.has_next) {
+						$btn.data('next-page', nextPage + 1).text('Load More');
+					} else {
+						$loadMore.hide();
+					}
+				})
+				.fail(function() {
+					$btn.text('Try Again');
+				})
+				.always(function() {
+					$btn.data('loading', false);
+				});
+		});
+	});
+</script>
+{% endblock extra_scripts %}

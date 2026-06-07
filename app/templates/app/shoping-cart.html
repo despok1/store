@@ -65,9 +65,9 @@
 									<td class="column-1">
 										<div class="how-itemcart1">
 											{% if item.product.main_image %}
-												<img src="{{ item.product.main_image.url }}" alt="{{ item.product.title }}">
+												<img loading="lazy" src="{{ item.product.main_image.url }}" alt="{{ item.product.title }}">
 											{% else %}
-												<img src="{% static 'images/placeholder.png' %}" alt="{{ item.product.title }}">
+												<img loading="lazy" src="{% static 'images/placeholder.png' %}" alt="{{ item.product.title }}">
 											{% endif %}
 										</div>
 									</td>

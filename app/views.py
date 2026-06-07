@@ -10,6 +10,8 @@ import urllib3
 
 from .models import Product, Category
 from django.http import JsonResponse
+from django.template.loader import render_to_string
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 import json
@@ -85,7 +87,30 @@ def get_cities_by_region():
 def index(request):
     categories = Category.objects.all().order_by('order')
     products = Product.objects.all().order_by('-is_featured', '-date_published') #! featured first, then by date
-    return render(request, 'app/index.html', {'products': products, 'categories': categories})
+
+    paginator = Paginator(products, 24)
+    page_number = request.GET.get('page', 1)
+    if paginator.num_pages == 0:
+        page_obj = None
+    else:
+        try:
+            page_obj = paginator.page(page_number)
+        except PageNotAnInteger:
+            page_obj = paginator.page(1)
+        except EmptyPage:
+            page_obj = paginator.page(paginator.num_pages)
+
+    query_string = ''
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.GET.get('ajax') == '1':
+        html = render_to_string('app/parts/product_grid_items.html', {'products': page_obj.object_list if page_obj else []})
+        return JsonResponse({'html': html, 'has_next': page_obj.has_next() if page_obj else False})
+
+    return render(request, 'app/index.html', {
+        'products': page_obj.object_list if page_obj else [],
+        'page_obj': page_obj,
+        'query_string': query_string,
+        'categories': categories,
+    })
 
 
 def product_list(request):
@@ -158,11 +183,36 @@ def product_list(request):
     
     products = products.distinct()
     categories = Category.objects.all().order_by('order')
+
+    paginator = Paginator(products, 24)
+    page_number = request.GET.get('page', 1)
+    if paginator.num_pages == 0:
+        page_obj = None
+    else:
+        try:
+            page_obj = paginator.page(page_number)
+        except PageNotAnInteger:
+            page_obj = paginator.page(1)
+        except EmptyPage:
+            page_obj = paginator.page(paginator.num_pages)
+
+    query_params = request.GET.copy()
+    if 'page' in query_params:
+        del query_params['page']
+    query_string = query_params.urlencode()
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.GET.get('ajax') == '1':
+        html = render_to_string('app/parts/product_grid_items.html', {'products': page_obj.object_list})
+        return JsonResponse({'html': html, 'has_next': page_obj.has_next()})
+
     return render(
         request,
         'app/product.html',
         {
-            'products': products,
+            'products': page_obj.object_list if page_obj else [],
+            'page_obj': page_obj,
+            'is_paginated': page_obj.has_other_pages() if page_obj else False,
+            'query_string': query_string,
             'categories': categories,
             'selected_category': category_slug,
             'selected_category_obj': selected_category_obj,
