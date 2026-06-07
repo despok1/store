@@ -59,6 +59,13 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 # Security settings for production
 
+# Disabled to prevent redirect loops when Railway proxies the request.
+# Railway's edge handles TLS termination; the app itself should not redirect.
+SECURE_SSL_REDIRECT = False
+
+# Trust Railway's proxy to forward the correct host header.
+USE_X_FORWARDED_HOST = True
+
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 SECURE_HSTS_SECONDS = 31536000  # 1 year
