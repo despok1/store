@@ -79,7 +79,13 @@ DATABASES = {
         'PORT': os.getenv('PGPORT'),
     }
 }
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
+_raw_allowed_hosts = os.environ.get('ALLOWED_HOSTS', '').split(',')
+ALLOWED_HOSTS = []
+for _host in _raw_allowed_hosts:
+    _host = _host.strip().rstrip('/')
+    _host = _host.removeprefix('https://').removeprefix('http://')
+    if _host:
+        ALLOWED_HOSTS.append(_host)
 
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
