@@ -86,7 +86,7 @@ def get_cities_by_region():
 
 def index(request):
     categories = Category.objects.all().order_by('order')
-    products = Product.objects.all().order_by('-is_featured', '-date_published') #! featured first, then by date
+    products = Product.objects.filter(is_featured=True).order_by('?') #! featured first, then by date
 
     paginator = Paginator(products, 24)
     page_number = request.GET.get('page', 1)
@@ -129,7 +129,7 @@ def product_list(request):
     except (ValueError, TypeError):
         max_price = 999999999
     
-    products = Product.objects.select_related('category', 'subcategory').all()
+    products = Product.objects.select_related('category', 'subcategory').all().order_by('?')  # Featured first, then by date
 
     selected_category_obj = None
     subcategories = []
@@ -179,7 +179,7 @@ def product_list(request):
     elif sort_by == 'price_desc':
         products = products.order_by('-price')
     else:  # default
-        products = products.order_by('-is_featured', '-date_published')
+        products = products.order_by('?')
     
     products = products.distinct()
     categories = Category.objects.all().order_by('order')

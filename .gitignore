@@ -131,3 +131,5 @@ cython_debug/
 
 # LSP config files
 pyrightconfig.json
+media/
+media – копія/

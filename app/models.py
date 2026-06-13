@@ -1,5 +1,14 @@
+from pathlib import Path
+
 from django.db import models
 from django.utils.text import slugify
+import uuid
+
+
+def product_main_image_upload_path(instance, filename):
+    base_name = Path(filename).stem
+    ext = Path(filename).suffix
+    return f"products/main/{base_name}-{uuid.uuid4()}{ext}"
 
 
 class Cart(models.Model):
@@ -68,7 +77,7 @@ class Variant(models.Model):
 # Основная модель продукта
 class Product(models.Model):
 	title = models.CharField(max_length=255)
-	main_image = models.ImageField(upload_to='products/main/', blank=True, null=True)
+	main_image = models.ImageField(upload_to=product_main_image_upload_path, blank=True, null=True)
 	
 	category = models.ForeignKey(Category, related_name='products', on_delete=models.SET_NULL, null=True, blank=True)
 	subcategory = models.ForeignKey(SubCategory, related_name='products', on_delete=models.SET_NULL, null=True, blank=True)
@@ -95,7 +104,7 @@ class Product(models.Model):
 		return self.title
 
 	def save(self, *args, **kwargs):
-		if not self.slug:
+		if not self.slug: # /product/lizhka-dlya-soup-1
 			base = slugify(self.title)[:240]
 			slug = base
 			counter = 1
