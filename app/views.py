@@ -358,31 +358,38 @@ def cart(request):
     cities_json = json.dumps(cities_by_region, ensure_ascii=False)
 
     cart = request.session.get('cart', {})
+    product_ids = [
+        cart_key.split(':')[0] if ':' in cart_key else cart_key
+        for cart_key in cart
+    ]
+    products_by_id = {
+        str(p.id): p
+        for p in Product.objects.filter(id__in=product_ids).prefetch_related('variants')
+    }
     for cart_key, quantity in cart.items():
         product_id, variant_id = cart_key.split(':') if ':' in cart_key else (cart_key, None)
-        try:
-            product = Product.objects.get(id=product_id)
-            variant = None
-            price = product.price
-            old_price = product.old_price
-            if variant_id:
-                variant = product.variants.filter(id=variant_id).first()
-                if variant:
-                    price = variant.price
-                    old_price = variant.old_price
-            subtotal = price * quantity
-            total += subtotal
-            cart_items.append({
-                'product': product,
-                'variant': variant,
-                'price': price,
-                'old_price': old_price,
-                'quantity': quantity,
-                'subtotal': subtotal,
-                'key': cart_key,
-            })
-        except Product.DoesNotExist:
-            pass  # Игнорировать несуществующие товары
+        product = products_by_id.get(str(product_id))
+        if product is None:
+            continue
+        variant = None
+        price = product.price
+        old_price = product.old_price
+        if variant_id:
+            variant = next((v for v in product.variants.all() if str(v.id) == str(variant_id)), None)
+            if variant:
+                price = variant.price
+                old_price = variant.old_price
+        subtotal = price * quantity
+        total += subtotal
+        cart_items.append({
+            'product': product,
+            'variant': variant,
+            'price': price,
+            'old_price': old_price,
+            'quantity': quantity,
+            'subtotal': subtotal,
+            'key': cart_key,
+        })
     return render(request, 'app/shoping-cart.html', {
         'cart_items': cart_items,
         'total': total,
@@ -413,28 +420,28 @@ def update_cart(request):
         # Пересчитать итоги
         total = 0
         subtotal = 0
-        if cart_key in cart:
-            product_id, variant_id = cart_key.split(':') if ':' in cart_key else (cart_key, None)
-            product = Product.objects.get(id=product_id)
-            price = product.price
-            if variant_id:
-                variant = product.variants.filter(id=variant_id).first()
+        cart_product_ids = [
+            key.split(':')[0] if ':' in key else key
+            for key in cart
+        ]
+        cart_products_by_id = {
+            str(p.id): p
+            for p in Product.objects.filter(id__in=cart_product_ids).prefetch_related('variants')
+        }
+        for key, qty in cart.items():
+            key_product_id, key_variant_id = key.split(':') if ':' in key else (key, None)
+            prod = cart_products_by_id.get(str(key_product_id))
+            if prod is None:
+                continue
+            price = prod.price
+            if key_variant_id:
+                variant = next((v for v in prod.variants.all() if str(v.id) == str(key_variant_id)), None)
                 if variant:
                     price = variant.price
-            subtotal = price * cart[cart_key]
-        
-        for key, qty in cart.items():
-            try:
-                product_id, variant_id = key.split(':') if ':' in key else (key, None)
-                prod = Product.objects.get(id=product_id)
-                price = prod.price
-                if variant_id:
-                    variant = prod.variants.filter(id=variant_id).first()
-                    if variant:
-                        price = variant.price
-                total += price * qty
-            except Product.DoesNotExist:
-                pass
+            item_total = price * qty
+            total += item_total
+            if key == cart_key:
+                subtotal = item_total
         
         return JsonResponse({
             'success': True,
