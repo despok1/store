@@ -177,3 +177,16 @@ a,
     pointer-events:auto;
     cursor:pointer;
 }
+
+.icon-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1;
+}
+
+.icon-container i {
+    font-size: 34px;
+    transition: color 0.3s ease;
+    color: white;
+}
