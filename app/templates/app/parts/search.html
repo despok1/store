@@ -22,7 +22,7 @@
 						{% endif %}
 					{% endfor %}
 					{% if categories|length > 6 %}
-					<button type="button" class="stext-106 cl6 bor3 trans-04 m-r-32 m-tb-5 js-toggle-cats">Показати менше</button>
+					<button type="button" class="stext-106 cl6 bor3 trans-04 m-r-32 m-tb-5 js-toggle-cats">Показати всі</button>
 					{% endif %}
 				</div>
 
@@ -42,7 +42,7 @@
 				
 				<!-- Search product -->
 				<div class="dis-none panel-search w-full p-t-10 p-b-15">
-					<form method="get" action="{% url 'product' %}" class="bor8 dis-flex p-l-15">
+					<form method="get" action="{% url 'product' %}" class="bor8 dis-flex p-l-15 search-form">
 						{% if selected_category %}
 							<input type="hidden" name="category" value="{{ selected_category }}">
 						{% endif %}
@@ -50,7 +50,11 @@
 							<i class="zmdi zmdi-search"></i>
 						</button>
 
-						<input class="mtext-107 cl2 size-114 plh2 p-r-15" type="text" name="q" value="" placeholder="Пошук">
+						<input class="mtext-107 cl2 size-114 plh2 p-r-15 search-input" type="text" name="q" value="{% if search_query %}{{ search_query }}{% endif %}" placeholder="Пошук">
+						
+						<button type="button" class="size-113 flex-c-m fs-16 cl2 hov-cl1 trans-04 search-clear" style="display: none;">
+							<i class="zmdi zmdi-close"></i>
+						</button>
 					</form>	
 				</div>
 

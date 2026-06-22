@@ -195,12 +195,31 @@
     $('.js-toggle-cats').on('click', function(){
         var $btn = $(this);
         var $more = $('.more-cats');
+        
+        // Перевіряємо, чи вже іде анімація
+        if($more.is(':animated')) {
+            return;
+        }
+        
         if($more.is(':visible')){
-            $more.slideUp(200);
-            $btn.text('Показати всі');
+            $more.slideUp(200, function(){
+                $btn.text('Показати всі');
+            });
         } else {
-            $more.slideDown(200);
+            $more.slideDown(200, function(){
+                $btn.text('Показати менше');
+            });
+        }
+    });
+
+    // Ініціалізація тексту кнопки при завантаженні сторінки
+    $('.js-toggle-cats').each(function(){
+        var $btn = $(this);
+        var $more = $('.more-cats');
+        if($more.is(':visible')){
             $btn.text('Показати менше');
+        } else {
+            $btn.text('Показати всі');
         }
     });
 
@@ -292,6 +311,39 @@
 
     $('.js-hide-modal1').on('click',function(){
         $('.js-modal1').removeClass('show-modal1');
+    });
+
+    /*==================================================================
+    [ Clear search ]*/
+    var searchInput = $('.search-input');
+    var searchClear = $('.search-clear');
+    var panelSearch = $('.panel-search');
+    var searchForm = $('.search-form');
+
+    // Показати кнопку очистки, якщо є текст
+    function updateClearButton() {
+        if(searchInput.val().length > 0) {
+            searchClear.show();
+            panelSearch.removeClass('dis-none');
+        } else {
+            searchClear.hide();
+            panelSearch.addClass('dis-none');
+        }
+    }
+
+    // Ініціалізація при завантаженні
+    updateClearButton();
+
+    // При введенні тексту
+    searchInput.on('input', function(){
+        updateClearButton();
+    });
+
+    // При кліку на кнопку очистки
+    searchClear.on('click', function(e){
+        e.preventDefault();
+        searchInput.val('');
+        searchForm.submit();
     });
 
 
