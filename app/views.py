@@ -150,8 +150,8 @@ def product_list(request):
         for keyword in keywords:
             products = products.filter(
                 Q(title__icontains=keyword)
-                # | Q(description__icontains=keyword)
-                # | Q(features__icontains=keyword)
+                | Q(description__icontains=keyword)
+                | Q(features__icontains=keyword)
                 | Q(category__name__icontains=keyword)
                 | Q(subcategory__name__icontains=keyword)
             )
